@@ -38,7 +38,7 @@ export default function QuestionCard({
           <div className="flex flex-wrap gap-3 mt-8">
             {question.options?.map((option) => {
               const hasCustomKeywords = question.id === 'concept-keywords';
-              const selectedValues = hasCustomKeywords
+              const selectedValues: string[] = hasCustomKeywords
                 ? Array.isArray(value?.selected)
                   ? value.selected
                   : Array.isArray(value)
@@ -66,7 +66,7 @@ export default function QuestionCard({
                       return;
                     }
                     if (isSelected) {
-                      const nextSelected = selectedValues.filter((v) => v !== option);
+                      const nextSelected = selectedValues.filter((v: string) => v !== option);
                       if (hasCustomKeywords) {
                         onChange({
                           selected: nextSelected,
