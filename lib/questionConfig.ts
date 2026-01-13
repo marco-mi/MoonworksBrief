@@ -1,4 +1,5 @@
 export type QuestionType = 
+  | 'intro'
   | 'multi-select-tags'
   | 'visual-grid'
   | 'multi-select'
@@ -8,7 +9,9 @@ export type QuestionType =
   | 'dropdown'
   | 'text-input'
   | 'date-input'
-  | 'secondary-functions';
+  | 'secondary-functions'
+  | 'file-upload'
+  | 'file-or-links';
 
 export interface Question {
   id: string;
@@ -22,6 +25,10 @@ export interface Question {
   inputs?: { label: string; placeholder: string }[];
   placeholder?: string;
   multiline?: boolean;
+  description?: string;
+  accept?: string;
+  multiple?: boolean;
+  linkPlaceholder?: string;
 }
 
 const primaryFunctionOptions = [
@@ -35,6 +42,17 @@ const primaryFunctionOptions = [
 ];
 
 export const questions: Question[] = [
+  // Section: Intro
+  {
+    id: 'brief-intro',
+    section: 'Welcome',
+    title: 'Before You Start',
+    type: 'intro',
+    required: false,
+    description:
+      'This brief builder is a structured way to capture your needs so we can deliver the best solution. It also helps you fully express what you want. Estimated time: 5 to 10 minutes.',
+  },
+
   // Section: Project Basics
   {
     id: 'client-name',
@@ -51,6 +69,24 @@ export const questions: Question[] = [
     type: 'text-input',
     required: false,
     placeholder: 'Enter a place, venue, or address...',
+  },
+  {
+    id: 'existing-brief-pdf',
+    section: 'Project Basics',
+    title: 'Upload an existing brief (PDF)',
+    type: 'file-upload',
+    required: false,
+    accept: 'application/pdf',
+  },
+  {
+    id: 'inspiration-assets',
+    section: 'Project Basics',
+    title: 'Inspiration images or links',
+    type: 'file-or-links',
+    required: false,
+    accept: 'image/*',
+    multiple: true,
+    linkPlaceholder: 'Paste links (one per line)',
   },
 
   // Section A: Aesthetic
@@ -72,6 +108,7 @@ export const questions: Question[] = [
       'Sustainable',
       'Biophilic',
       'Kinetic',
+      'Other',
     ],
   },
   {
@@ -93,8 +130,6 @@ export const questions: Question[] = [
       { label: 'Purple', gradient: 'linear-gradient(135deg, #800080 0%, #800080 100%)' },
       { label: 'Pink', gradient: 'linear-gradient(135deg, #FFC0CB 0%, #FFC0CB 100%)' },
       // Gradients (6)
-      { label: 'White to Black', gradient: 'linear-gradient(135deg, #FFFFFF 0%, #000000 100%)' },
-      { label: 'White to Red', gradient: 'linear-gradient(135deg, #FFFFFF 0%, #FF0000 100%)' },
       { label: 'Rainbow', gradient: 'linear-gradient(135deg, #FF0000 0%, #FF7F00 16%, #FFFF00 33%, #00FF00 50%, #0000FF 66%, #4B0082 83%, #9400D3 100%)' },
       { label: 'Pastel Gradient', gradient: 'linear-gradient(135deg, #FFB6C1 0%, #87CEEB 50%, #DDA0DD 100%)' },
       { label: 'Sunset', gradient: 'linear-gradient(135deg, #FF6B6B 0%, #FFE66D 50%, #4ECDC4 100%)' },
@@ -103,7 +138,6 @@ export const questions: Question[] = [
       { label: 'Light Wood', gradient: 'linear-gradient(135deg, #DEB887 0%, #F5DEB3 100%)' },
       { label: 'Medium Tone Wood', gradient: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)' },
       { label: 'Dark Wood', gradient: 'linear-gradient(135deg, #654321 0%, #3E2723 100%)' },
-      { label: 'Grey Wood', gradient: 'linear-gradient(135deg, #708090 0%, #556B2F 100%)' },
       { label: 'Burned Wood', gradient: 'linear-gradient(135deg, #2F1B14 0%, #1A0E0A 100%)' },
       { label: 'Oak Wood', gradient: 'linear-gradient(135deg, #D2B48C 0%, #C19A6B 100%)' },
       // Marble

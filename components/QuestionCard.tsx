@@ -37,17 +37,56 @@ export default function QuestionCard({
         return (
           <div className="flex flex-wrap gap-3 mt-8">
             {question.options?.map((option) => {
-              const isSelected = Array.isArray(value) && value.includes(option);
+              const hasCustomKeywords = question.id === 'concept-keywords';
+              const selectedValues = hasCustomKeywords
+                ? Array.isArray(value?.selected)
+                  ? value.selected
+                  : Array.isArray(value)
+                    ? value
+                    : []
+                : Array.isArray(value)
+                  ? value
+                  : [];
+              const otherEnabled = hasCustomKeywords ? value?.otherEnabled === true : false;
+              const isOtherOption = option === 'Other' && hasCustomKeywords;
+              const isSelected = isOtherOption
+                ? otherEnabled
+                : selectedValues.includes(option);
               return (
                 <button
                   key={option}
                   type="button"
                   onClick={() => {
-                    const current = Array.isArray(value) ? value : [];
+                    if (isOtherOption) {
+                      onChange({
+                        selected: selectedValues,
+                        otherEnabled: !otherEnabled,
+                        otherInput: '',
+                      });
+                      return;
+                    }
                     if (isSelected) {
-                      onChange(current.filter((v) => v !== option));
+                      const nextSelected = selectedValues.filter((v) => v !== option);
+                      if (hasCustomKeywords) {
+                        onChange({
+                          selected: nextSelected,
+                          otherEnabled,
+                          otherInput: value?.otherInput || '',
+                        });
+                      } else {
+                        onChange(nextSelected);
+                      }
                     } else {
-                      onChange([...current, option]);
+                      const nextSelected = [...selectedValues, option];
+                      if (hasCustomKeywords) {
+                        onChange({
+                          selected: nextSelected,
+                          otherEnabled,
+                          otherInput: value?.otherInput || '',
+                        });
+                      } else {
+                        onChange(nextSelected);
+                      }
                     }
                   }}
                   className={`px-6 py-3 rounded-full text-lg font-medium transition-all duration-200 ${
@@ -60,6 +99,85 @@ export default function QuestionCard({
                 </button>
               );
             })}
+            {question.id === 'concept-keywords' && (() => {
+              const selectedValues = Array.isArray(value?.selected)
+                ? value.selected
+                : Array.isArray(value)
+                  ? value
+                  : [];
+              const options = question.options || [];
+              const customValues = selectedValues.filter((item: string) => !options.includes(item));
+              if (customValues.length === 0) return null;
+              return customValues.map((customValue: string) => (
+                <button
+                  key={`custom-${customValue}`}
+                  type="button"
+                  onClick={() => {
+                    const nextSelected = selectedValues.filter((v: string) => v !== customValue);
+                    onChange({
+                      selected: nextSelected,
+                      otherEnabled: value?.otherEnabled === true,
+                      otherInput: value?.otherInput || '',
+                    });
+                  }}
+                  className="px-6 py-3 rounded-full text-lg font-medium transition-all duration-200 bg-creative-purple text-black"
+                >
+                  {customValue}
+                </button>
+              ));
+            })()}
+            {question.id === 'concept-keywords' && value?.otherEnabled === true && (
+              <input
+                type="text"
+                placeholder="Add a keyword and press Enter"
+                value={typeof value?.otherInput === 'string' ? value.otherInput : ''}
+                onChange={(e) => {
+                  const selectedValues = Array.isArray(value?.selected)
+                    ? value.selected
+                    : Array.isArray(value)
+                      ? value
+                      : [];
+                  onChange({
+                    selected: selectedValues,
+                    otherEnabled: true,
+                    otherInput: e.target.value,
+                  });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const inputValue = typeof value?.otherInput === 'string' ? value.otherInput.trim() : '';
+                    if (!inputValue) return;
+                    const selectedValues = Array.isArray(value?.selected)
+                      ? value.selected
+                      : Array.isArray(value)
+                        ? value
+                        : [];
+                    const nextSelected = selectedValues.includes(inputValue)
+                      ? selectedValues
+                      : [...selectedValues, inputValue];
+                    onChange({
+                      selected: nextSelected,
+                      otherEnabled: true,
+                      otherInput: '',
+                    });
+                  }
+                }}
+                className="w-full px-4 py-3 bg-dark-grey border border-gray-700 rounded-lg text-white text-lg focus:outline-none focus:border-creative-purple transition-colors"
+              />
+            )}
+          </div>
+        );
+
+      case 'intro':
+        return (
+          <div className="mt-6">
+            {question.description && (
+              <p className="text-lg text-gray-300 leading-relaxed whitespace-pre-line">
+                {question.description}
+              </p>
+            )}
           </div>
         );
 
@@ -95,6 +213,64 @@ export default function QuestionCard({
             })}
           </div>
         );
+
+      case 'file-upload':
+        return (
+          <div className="mt-8 space-y-4">
+            <label className="block text-sm text-gray-400">Upload file</label>
+            <input
+              type="file"
+              accept={question.accept}
+              onChange={(e) => {
+                const files = e.target.files ? Array.from(e.target.files) : [];
+                onChange(files);
+              }}
+              className="w-full text-white text-lg file:mr-4 file:rounded-lg file:border-0 file:bg-creative-purple file:px-4 file:py-2 file:text-black file:font-medium file:cursor-pointer"
+            />
+            {Array.isArray(value) && value.length > 0 && (
+              <div className="text-sm text-gray-300">
+                {value.map((file: File) => file.name).join(', ')}
+              </div>
+            )}
+          </div>
+        );
+
+      case 'file-or-links': {
+        const filesValue = Array.isArray(value?.files) ? value.files : [];
+        const linksValue = typeof value?.links === 'string' ? value.links : '';
+        return (
+          <div className="mt-8 space-y-6">
+            <div className="space-y-3">
+              <label className="block text-sm text-gray-400">Upload images</label>
+              <input
+                type="file"
+                accept={question.accept}
+                multiple={question.multiple}
+                onChange={(e) => {
+                  const files = e.target.files ? Array.from(e.target.files) : [];
+                  onChange({ files, links: linksValue });
+                }}
+                className="w-full text-white text-lg file:mr-4 file:rounded-lg file:border-0 file:bg-creative-purple file:px-4 file:py-2 file:text-black file:font-medium file:cursor-pointer"
+              />
+              {filesValue.length > 0 && (
+                <div className="text-sm text-gray-300">
+                  {filesValue.map((file: File) => file.name).join(', ')}
+                </div>
+              )}
+            </div>
+            <div className="space-y-3">
+              <label className="block text-sm text-gray-400">Links</label>
+              <textarea
+                placeholder={question.linkPlaceholder || 'Paste links (one per line)'}
+                value={linksValue}
+                onChange={(e) => onChange({ files: filesValue, links: e.target.value })}
+                rows={4}
+                className="w-full px-4 py-3 bg-dark-grey border border-gray-700 rounded-lg text-white text-lg focus:outline-none focus:border-creative-purple transition-colors resize-none"
+              />
+            </div>
+          </div>
+        );
+      }
 
       case 'multi-select':
         return (

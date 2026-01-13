@@ -32,6 +32,22 @@ export default function BriefSummary({ answers, questions, onEdit }: BriefSummar
 
     switch (question.type) {
       case 'multi-select-tags':
+        if (question.id === 'concept-keywords' && answer && typeof answer === 'object') {
+          const selectedValues = Array.isArray(answer.selected) ? answer.selected : [];
+          const otherValues = Array.isArray(answer.other)
+            ? answer.other.filter((item: string) => item.trim())
+            : [];
+          const otherInput = typeof answer.otherInput === 'string' ? answer.otherInput.trim() : '';
+          const combined = [...selectedValues, ...otherValues];
+          if (otherInput) {
+            combined.push(otherInput);
+          }
+          return combined.length > 0 ? combined.join(', ') : 'Not answered';
+        }
+        return Array.isArray(answer) && answer.length > 0
+          ? answer.join(', ')
+          : 'Not answered';
+
       case 'multi-select':
         return Array.isArray(answer) && answer.length > 0
           ? answer.join(', ')
@@ -56,6 +72,25 @@ export default function BriefSummary({ answers, questions, onEdit }: BriefSummar
       case 'text-input':
       case 'date-input':
         return answer || 'Not answered';
+
+      case 'file-upload':
+        return Array.isArray(answer) && answer.length > 0
+          ? answer.map((file: File) => file.name).join(', ')
+          : 'Not answered';
+
+      case 'file-or-links': {
+        const filesValue = Array.isArray(answer?.files) ? answer.files : [];
+        const linksValue = typeof answer?.links === 'string' ? answer.links.trim() : '';
+        const fileNames = filesValue.length > 0
+          ? filesValue.map((file: File) => file.name).join(', ')
+          : '';
+        const links = linksValue
+          ? linksValue.split('\n').map((line: string) => line.trim()).filter(Boolean).join(', ')
+          : '';
+        if (!fileNames && !links) return 'Not answered';
+        if (fileNames && links) return `${fileNames}; ${links}`;
+        return fileNames || links || 'Not answered';
+      }
 
       case 'secondary-functions':
         return Array.isArray(answer) && answer.length > 0
@@ -109,9 +144,7 @@ export default function BriefSummary({ answers, questions, onEdit }: BriefSummar
 
       <div className="bg-dark-grey rounded-lg border border-gray-700 p-8 space-y-8">
         {questions
-          .filter((q) => {
-            return true;
-          })
+          .filter((q) => q.type !== 'intro')
           .map((question) => (
             <div key={question.id} className="border-b border-gray-800 pb-6 last:border-0">
               <h3 className="text-xl font-semibold text-white mb-2">{question.title}</h3>
