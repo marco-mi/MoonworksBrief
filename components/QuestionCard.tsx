@@ -363,12 +363,16 @@ export default function QuestionCard({
               );
             })}
             {question.options?.includes('Other') &&
-              question.id === 'primary-function' &&
+              (question.id === 'primary-function' || question.id === 'event-date-context') &&
               typeof value === 'string' &&
               value.startsWith('Other') && (
               <input
                 type="text"
-                placeholder="What is the primary function?"
+                placeholder={
+                  question.id === 'event-date-context'
+                    ? 'What event or date is it tied to?'
+                    : 'What is the primary function?'
+                }
                 value={value.replace(/^Other:\s?/, '').replace(/^Other$/, '')}
                 onChange={(e) => {
                   const trimmed = e.target.value.trim();
